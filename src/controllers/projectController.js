@@ -1,8 +1,35 @@
 const Project = require('../models/Project');
 
+const normalizeSubtasks = (subtasks = []) =>
+  subtasks.map((subtask) => ({
+    title: subtask.title,
+    completed: subtask.completed ?? false,
+  }));
+
+const mergeSubtasks = (project, incomingSubtasks) => {
+  incomingSubtasks.forEach((incoming) => {
+    if (incoming._id) {
+      const existing = project.subtasks.id(incoming._id);
+
+      if (existing) {
+        if (incoming.title !== undefined) existing.title = incoming.title;
+        if (incoming.completed !== undefined) existing.completed = incoming.completed;
+        return;
+      }
+    }
+
+    if (incoming.title) {
+      project.subtasks.push({
+        title: incoming.title,
+        completed: incoming.completed ?? false,
+      });
+    }
+  });
+};
+
 const createProject = async (req, res) => {
   try {
-    const { title, description, status, leader } = req.body;
+    const { title, description, status, leader, dueDate, subtasks } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({ message: 'Título y descripción son obligatorios.' });
@@ -15,6 +42,8 @@ const createProject = async (req, res) => {
       title,
       description,
       status,
+      dueDate: dueDate || undefined,
+      subtasks: Array.isArray(subtasks) ? normalizeSubtasks(subtasks) : [],
       leader: projectLeader,
     });
 
@@ -55,7 +84,7 @@ const getProjectById = async (req, res) => {
 
 const updateProject = async (req, res) => {
   try {
-    const { title, description, status, leader } = req.body;
+    const { title, description, status, leader, dueDate, subtasks, replaceSubtasks } = req.body;
 
     const project = await Project.findById(req.params.id);
 
@@ -63,10 +92,19 @@ const updateProject = async (req, res) => {
       return res.status(404).json({ message: 'Proyecto no encontrado.' });
     }
 
-    if (title) project.title = title;
-    if (description) project.description = description;
-    if (status) project.status = status;
+    if (title !== undefined) project.title = title;
+    if (description !== undefined) project.description = description;
+    if (status !== undefined) project.status = status;
+    if (dueDate !== undefined) project.dueDate = dueDate || null;
     if (leader && req.user.role === 'Administrador') project.leader = leader;
+
+    if (subtasks !== undefined && Array.isArray(subtasks)) {
+      if (replaceSubtasks) {
+        project.subtasks = normalizeSubtasks(subtasks);
+      } else {
+        mergeSubtasks(project, subtasks);
+      }
+    }
 
     await project.save();
 
