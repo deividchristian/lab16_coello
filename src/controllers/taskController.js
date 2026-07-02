@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
 const Project = require('../models/Project');
 const User = require('../models/User');
@@ -18,8 +19,8 @@ const createTask = async (req, res) => {
     }
 
     const existingUser = await User.findById(assignedTo);
-    if (!existingUser) {
-      return res.status(404).json({ message: 'Usuario asignado no encontrado.' });
+    if (!existingUser || !mongoose.Types.ObjectId.isValid(assignedTo)) {
+      return res.status(400).json({ message: 'El usuario asignado no existe en la base de datos.' });
     }
 
     const task = await Task.create({
@@ -27,7 +28,7 @@ const createTask = async (req, res) => {
       description,
       status,
       project,
-      assignedTo,
+      assignedTo: existingUser._id,
     });
 
     const populatedTask = await Task.findById(task._id)

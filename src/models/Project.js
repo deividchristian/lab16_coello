@@ -1,11 +1,16 @@
 const mongoose = require('mongoose');
 
-const subtaskSchema = new mongoose.Schema(
+const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'El título de la subtarea es obligatorio'],
+      required: [true, 'El nombre de la tarea es obligatorio'],
       trim: true,
+    },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'El usuario asignado es obligatorio'],
     },
     completed: {
       type: Boolean,
@@ -35,14 +40,19 @@ const projectSchema = new mongoose.Schema(
     dueDate: {
       type: Date,
     },
-    subtasks: {
-      type: [subtaskSchema],
-      default: [],
-    },
     leader: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'El líder del proyecto es obligatorio'],
+    },
+    leaderEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    tasks: {
+      type: [taskSchema],
+      default: [],
     },
   },
   { timestamps: true }
