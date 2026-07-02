@@ -11,8 +11,11 @@ const taskRoutes = require('./routes/taskRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
-app.use(cors());
+// Middlewares — CORS debe ir antes de cualquier ruta
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+}));
 app.use(express.json());
 
 // Rutas
@@ -25,14 +28,17 @@ app.get('/', (req, res) => {
   res.json({ message: 'API funcionando correctamente' });
 });
 
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error('Error al conectar con MongoDB:', error.message);
-    process.exit(1);
-  });
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB conectado correctamente');
+  } catch (error) {
+    console.error('ERROR DETALLADO:', error);
+  }
+};
+
+connectDB();
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
