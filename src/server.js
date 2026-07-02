@@ -11,10 +11,12 @@ const taskRoutes = require('./routes/taskRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares — CORS debe ir antes de cualquier ruta
+
+const cors = require('cors');
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
